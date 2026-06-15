@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>우리반 만화풍 막대 뽑기 (모바일 최적화본)</title>
+    <link href="https://fonts.googleapis.com/css2?family=Gmarket+Sans:wght@500;700&display=swap" rel="stylesheet">
+    <style>
+        /* 기본 전체 박스 모델 설정 */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* 기본 배경 (만화풍 도트) */
+        body {
+            background-color: #fffbeb; 
+            background-image: radial-gradient(#fef08a 3px, transparent 3px);
+            background-size: 28px 28px;
+            font-family: 'Gmarket Sans', sans-serif;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 30px 20px 60px 20px; /* 하단 패딩을 늘려 모바일 스크롤 여유 확보 */
+            overflow-x: hidden;
+            overflow-y: auto; /* 변경: 모바일에서 드래그/스크롤이 가능하도록 설정 */
+            user-select: none;
+        }
+
+        /* 우측 상단 통계 버튼 */
+        .btn-show-stats {
+            position: absolute;
+            top: 30px;
+            right: 40px;
+            padding: 12px 24px;
+            font-family: 'Gmarket Sans', sans-serif;
+            font-weight: 700;
+            font-size: 1.2rem;
+            color: #1e293b;
+            background-color: #fcd34d;
+            border: 4px solid #1e293b;
+            border-radius: 20px;
+            box-shadow: 4px 4px 0px #1e293b;
+            cursor: pointer;
+            transition: transform 0.1s, box-shadow 0.1s;
+            z-index: 50;
+        }
+        .btn-show-stats:active {
+            transform: translate(3px, 3px);
+            box-shadow: 1px 1px 0px #1e293b;
+        }
+
+        /* 메인 뽑기 구역 */
+        .picker-zone {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+        }
+
+        .status-text {
+            font-size: 1.4rem;
+            color: #1e293b;
+            font-weight: 700;
+            background: #ffffff;
+            padding: 8px 20px;
+            border: 4px solid #1e293b;
+            border-radius: 20px;
+            box-shadow: 4px 4px 0px #1e293b;
+            margin-bottom: 20px;
+            white-space: nowrap;
+        }
+
+        .container {
+            position: relative;
+            width: 100%;
+            height: 420px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            margin-bottom: 30px;
+        }
+
+        .cup {
+            position: relative;
+            width: 260px;
+            height: 340px;
+            background: rgba(255, 255, 255, 0.7); 
+            border: 6px solid #1e293b; 
+            border-top: none;
+            border-bottom-left-radius: 40px;
+            border-bottom-right-radius: 40px;
+            box-shadow: 8px 12px 0px rgba(30, 41, 59, 0.15);
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            z-index: 10;
+            transform-origin: center center;
+        }
+        
+        .cup::before {
+            content: '';
+            position: absolute;
+            top: -15px;
+            left: -6px;
+            width: 260px;
+            height: 24px;
+            border: 6px solid #1e293b;
+            border-radius: 50%;
+            background: #ffffff;
+        }
+
+        @keyframes cupShakeEffect {
+            0% { transform: translate(0, 0) rotate(0deg); }
+            20% { transform: translate(-5px, -8px) rotate(-2deg); }
+            40% { transform: translate(6px, -3px) rotate(3deg); }
+            60% { transform: translate(-4px, -10px) rotate(-1deg); }
+            80% { transform: translate(5px, -5px) rotate(2deg); }
+            100% { transform: translate(0, 0) rotate(0deg); }
+        }
+        .shuffling .cup {
+            animation: cupShakeEffect 0.25s infinite ease-in-out;
+        }
+
+        .sticks-container {
+            position: absolute;
+            bottom: 30px;
+            width: 200px;
+            height: 340px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+        }
+
+        .stick {
+            position: absolute;
+            width: 24px;
+            height: 270px;
+            background: #fcd34d; 
+            border: 4px solid #1e293b; 
+            border-radius: 12px;
+            transform-origin: bottom center;
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.15);
+        }
+        .stick::after {
+            content: '';
+            position: absolute;
+            top: 8px;
+            left: 3px;
+            width: 10px;
+            height: 40px;
+            background: #f59e0b; 
+            border-radius: 6px;
+        }
+
+        @keyframes stickInternalShuffle {
+            0% { transform: translate(var(--shiftX), 0) rotate(var(--rot)); }
+            25% { transform: translate(calc(var(--shiftX) - 10px), -18px) rotate(calc(var(--rot) + 8deg)); }
+            50% { transform: translate(calc(var(--shiftX) + 12px), -5px) rotate(calc(var(--rot) - 10deg)); }
+            75% { transform: translate(calc(var(--shiftX) - 8px), -22px) rotate(calc(var(--rot) + 6deg)); }
+            100% { transform: translate(var(--shiftX), 0) rotate(var(--rot)); }
+        }
+        .shuffling .stick {
+            animation: stickInternalShuffle 0.25s infinite linear;
+        }
+
+        .btn-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            width: 100%;
+        }
+        .btn {
+            font-family: 'Gmarket Sans', sans-serif;
+            font-weight: 700;
+            border: 4px solid #1e293b; 
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .btn-pick {
+            padding: 20px 60px;
+            font-size: 1.6rem;
+            color: #fff;
+            background: #3b82f6; 
+            border-radius: 40px;
+            box-shadow: 0px 8px 0px #1d4ed8, 0px 8px 0px #1e293b; 
+        }
+        .btn-pick:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0px 10px 0px #1d4ed8, 0px 10px 0px #1e293b;
+        }
+        .btn-pick:active:not(:disabled) {
+            transform: translateY(6px);
+            box-shadow: 0px 2px 0px #1e293b;
+        }
+        .btn-pick:disabled {
+            background: #cbd5e1;
+            border-color: #64748b;
+            box-shadow: none;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .btn-reset {
+            padding: 12px 28px;
+            font-size: 1rem;
+            color: #1e293b;
+            background-color: #ffffff;
+            border-radius: 30px;
+            box-shadow: 4px 4px 0px #1e293b;
+        }
+        .btn-reset:active {
+            transform: translate(3px, 3px);
+            box-shadow: 1px 1px 0px #1e293b;
+        }
+
+        /* 결과 화면 오버레이 */
+        .result-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255, 255, 255, 0.9);
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            z-index: 100;
+            opacity: 0; pointer-events: none; transition: opacity 0.4s ease;
+        }
+        .result-overlay.active { opacity: 1; pointer-events: auto; }
+        .result-stick-box {
+            position: relative; width: 150px; height: 680px; background: #fcd34d;
+            border: 8px solid #1e293b; border-radius: 80px; box-shadow: 16px 16px 0px #1e293b; 
+            display: flex; justify-content: center; align-items: center;
+            transform: translateY(60px) rotate(-8deg) scale(0.5);
+            transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.42, 1.2);
+        }
+        .result-overlay.active .result-stick-box { transform: translateY(0) rotate(0deg) scale(1); }
+        .result-name {
+            font-size: 4.5rem; font-weight: 700; color: #1e293b;
+            writing-mode: vertical-rl; text-orientation: upright; letter-spacing: 14px;
+        }
+        .close-hint {
+            margin-top: 50px; font-size: 1.2rem; font-weight: 700; color: #475569;
+            background: #fff; padding: 10px 24px; border: 3px solid #1e293b;
+            border-radius: 12px; cursor: pointer; box-shadow: 4px 4px 0px #1e293b;
+        }
+
+        /* 통계 팝업창 (모달) 스타일 */
+        .stats-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.5); 
+            display: flex; justify-content: center; align-items: center;
+            z-index: 200;
+            opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+        }
+        .stats-overlay.active { opacity: 1; pointer-events: auto; }
+
+        .stats-modal {
+            width: 600px;
+            max-width: 90%; /* 변경: 모바일 기기 너비에 맞춰 자동 조절 */
+            background: #ffffff;
+            border: 6px solid #1e293b;
+            border-radius: 24px;
+            padding: 30px;
+            box-shadow: 16px 16px 0px #1e293b;
+            position: relative;
+            transform: translateY(30px);
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.15);
+        }
+        .stats-overlay.active .stats-modal { transform: translateY(0); }
+
+        .btn-close-stats {
+            position: absolute;
+            top: -20px; right: -20px;
+            width: 50px; height: 50px;
+            background: #ef4444; border: 4px solid #1e293b; border-radius: 50%;
+            color: white; font-size: 1.5rem; font-weight: bold;
+            display: flex; justify-content: center; align-items: center;
+            cursor: pointer; box-shadow: 4px 4px 0px #1e293b;
+        }
+        .btn-close-stats:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0px #1e293b; }
+
+        .stats-title {
+            font-size: 2.2rem; font-weight: 700; text-align: center;
+            margin-top: 0; margin-bottom: 20px; color: #1e293b;
+            border-bottom: 4px dashed #1e293b; padding-bottom: 10px;
+        }
+
+        .special-records {
+            background: #f8fafc; border: 3px solid #1e293b; border-radius: 14px;
+            padding: 15px; margin-bottom: 20px; text-align: center;
+        }
+        .record-line { 
+            font-size: 1.3rem; 
+            font-weight: 700; 
+            color: #1e293b; 
+            word-break: keep-all; 
+        }
+        .record-line span {
+            color: #e11d48; background: #ffe4e6; padding: 4px 12px;
+            border-radius: 6px; border: 2px solid #1e293b; margin-left: 5px;
+            white-space: nowrap; /* 변경: 이름이나 '아직 없음' 텍스트가 쪼개지지 않도록 설정 */
+            display: inline-block;
+        }
+
+        .student-grid {
+            display: grid; 
+            grid-template-columns: 1fr 1fr; 
+            gap: 10px;
+            max-height: 400px; 
+            overflow-y: auto; 
+            padding-right: 5px;
+        }
+        .student-grid::-webkit-scrollbar { width: 10px; }
+        .student-grid::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 5px; border: 2px solid #1e293b; }
+        .student-grid::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 5px; }
+
+        .grid-item {
+            display: flex; justify-content: space-between; align-items: center;
+            background: #f1f5f9; border: 2px solid #1e293b; padding: 10px 14px;
+            border-radius: 10px; font-weight: 700; font-size: 1.05rem; color: #1e293b;
+        }
+        .grid-item.highlight { background: #fef08a; } 
+        
+        .grid-item span:first-child {
+            white-space: nowrap; /* 변경: 명단 내의 이름 마지막 글자가 아래로 안 내려가게 방지 */
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .count-badge {
+            background: #3b82f6; color: white; border: 2px solid #1e293b;
+            padding: 2px 8px; border-radius: 6px; font-size: 0.95rem;
+            white-space: nowrap; /* 변경: '회' 글자가 분리되지 않고 가로로 고정되도록 함 */
+        }
+
+        /* ★ [추가] 모바일 기기 화면 최적화 미디어 쿼리 ★ */
+        @media (max-width: 600px) {
+            body {
+                justify-content: flex-start; /* 상단부터 채워지게 하여 자연스러운 스크롤 유도 */
+                padding-top: 15px;
+            }
+
+            /* 통계 보기 버튼이 현황판과 절대 겹치지 않게 절대좌표 해제 및 상단 중앙 배치 */
+            .btn-show-stats {
+                position: relative;
+                top: 0;
+                right: 0;
+                margin-bottom: 15px;
+                width: 100%;
+                max-width: 220px;
+                text-align: center;
+                padding: 10px 20px;
+                font-size: 1.1rem;
+                box-shadow: 3px 3px 0px #1e293b;
+            }
+
+            .status-text {
+                font-size: 1.2rem;
+                padding: 8px 16px;
+                margin-bottom: 15px;
+            }
+
+            /* 모바일 화면 높이에 맞게 컵 구역의 높이를 알맞게 축소 */
+            .container {
+                height: 350px;
+                margin-bottom: 20px;
+            }
+            .cup {
+                width: 210px;
+                height: 280px;
+            }
+            .cup::before {
+                width: 210px;
+                height: 20px;
+                top: -12px;
+            }
+            .sticks-container {
+                width: 160px;
+                height: 280px;
+                bottom: 25px;
+            }
+            .stick {
+                height: 220px;
+                width: 20px;
+            }
+
+            .btn-pick {
+                padding: 16px 45px;
+                font-size: 1.4rem;
+            }
+
+            /* 통계 모달 창 모바일 최적화 */
+            .stats-modal {
+                padding: 20px 15px;
+            }
+            .stats-title {
+                font-size: 1.7rem;
+                margin-bottom: 15px;
+            }
+            .record-line {
+                font-size: 1.05rem;
+                display: flex;
+                flex-direction: column; /* 좁은 폭에서 줄 바꿈 대신 세로로 정렬하여 잘림 방지 */
+                align-items: center;
+                gap: 5px;
+            }
+            .record-line span {
+                margin-left: 0;
+            }
+
+            /* 모바일 폭에서는 2열 배치가 좁아 이름이 깨지므로 1열 배치로 명쾌하게 변경 */
+            .student-grid {
+                grid-template-columns: 1fr;
+                max-height: 280px;
+            }
+            .grid-item {
+                font-size: 1rem;
+                padding: 10px 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <button class="btn-show-stats" onclick="openStatsModal()">통계 보기</button>
+
+    <div class="picker-zone">
+        <div class="status-text" id="statusText">남은 막대: 22개 / 22개</div>
+        
+        <div class="container" id="mainContainer">
+            <div class="cup">
+                <div class="sticks-container" id="sticksContainer"></div>
+            </div>
+        </div>
+
+        <div class="btn-container">
+            <button class="btn btn-pick" id="pickBtn" onclick="startLottery()">막대 뽑기</button>
+            <button class="btn btn-reset" onclick="resetLottery()">뽑혔던 사람 다시 넣기</button>
+        </div>
+    </div>
+
+    <div class="stats-overlay" id="statsOverlay">
+        <div class="stats-modal">
+            <div class="btn-close-stats" onclick="closeStatsModal()">X</div>
+            <h2 class="stats-title">누적 통계</h2>
+            
+            <div class="special-records">
+                <div class="record-line">제일 많이 뽑힌 사람 : <span id="mostPickedPerson">아직 없음</span></div>
+            </div>
+
+            <div class="student-grid" id="statsGrid">
+                </div>
+        </div>
+    </div>
+
+    <div class="result-overlay" id="resultOverlay" onclick="closeResult()">
+        <div class="result-stick-box">
+            <div class="result-name" id="resultName">정지아나</div>
+        </div>
+        <div class="close-hint">화면을 터치하면 창이 닫힙니다!</div>
+    </div>
+
+    <script>
+        const studentMasterList = [
+            { id: 1, name: "정지아나", count: 0 },
+            { id: 2, name: "강동은", count: 0 },
+            { id: 3, name: "권재아", count: 0 },
+            { id: 4, name: "김나현", count: 0 },
+            { id: 5, name: "김민재", count: 0 },
+            { id: 6, name: "김서온", count: 0 },
+            { id: 8, name: "마수현", count: 0 },
+            { id: 9, name: "옥나경", count: 0 },
+            { id: 10, name: "윤지민", count: 0 },
+            { id: 11, name: "이송하", count: 0 },
+            { id: 12, name: "이현진", count: 0 },
+            { id: 13, name: "임시하", count: 0 },
+            { id: 14, name: "장재윤", count: 0 },
+            { id: 15, name: "장하연", count: 0 },
+            { id: 16, name: "정루완", count: 0 },
+            { id: 17, name: "정서원", count: 0 },
+            { id: 18, name: "정연우", count: 0 },
+            { id: 19, name: "정예준", count: 0 },
+            { id: 20, name: "최다은", count: 0 },
+            { id: 21, name: "최유준", count: 0 },
+            { id: 22, name: "최윤우", count: 0 },
+            { id: 23, name: "태아연", count: 0 }
+        ];
+
+        let currentInCup = [...studentMasterList];
+        let currentMaxScore = 0;
+        let currentTopScorerName = "아직 없음";
+
+        const mainContainer = document.getElementById('mainContainer');
+        const container = document.getElementById('sticksContainer');
+        const pickBtn = document.getElementById('pickBtn');
+        const resultOverlay = document.getElementById('resultOverlay');
+        const resultName = document.getElementById('resultName');
+        const statusText = document.getElementById('statusText');
+        
+        const statsOverlay = document.getElementById('statsOverlay');
+        const statsGrid = document.getElementById('statsGrid');
+        const mostPickedPerson = document.getElementById('mostPickedPerson');
+
+        function openStatsModal() {
+            statsOverlay.classList.add('active');
+        }
+        function closeStatsModal() {
+            statsOverlay.classList.remove('active');
+        }
+
+        function updateStatisticsBoard() {
+            statsGrid.innerHTML = '';
+            
+            studentMasterList.forEach(student => {
+                const item = document.createElement('div');
+                item.classList.add('grid-item');
+                
+                if (currentMaxScore > 0 && student.count === currentMaxScore) {
+                    item.classList.add('highlight');
+                }
+
+                item.innerHTML = `
+                    <span>${student.id}. ${student.name}</span>
+                    <span class="count-badge">${student.count}회</span>
+                `;
+                statsGrid.appendChild(item);
+            });
+
+            if (currentMaxScore === 0) {
+                mostPickedPerson.innerText = "아직 없음";
+            } else {
+                mostPickedPerson.innerText = `${currentTopScorerName} (${currentMaxScore}회)`;
+            }
+        }
+
+        function displaySticks() {
+            container.innerHTML = '';
+            const count = currentInCup.length;
+            
+            statusText.innerText = `남은 막대: ${count}개 / 22개`;
+
+            for(let i = 0; i < count; i++) {
+                const stick = document.createElement('div');
+                stick.classList.add('stick');
+                
+                const maxSpread = count > 1 ? 50 : 0; 
+                const angle = count > 1 ? - (maxSpread/2) + (i * (maxSpread / (count - 1))) : 0;
+                const randomShift = (Math.random() - 0.5) * 24; 
+                
+                stick.style.setProperty('--rot', `${angle}deg`);
+                stick.style.setProperty('--shiftX', `${randomShift}px`);
+                
+                stick.style.transform = `translate(${randomShift}px, 0) rotate(${angle}deg)`;
+                stick.style.animationDelay = `${Math.random() * -0.2}s`;
+                
+                container.appendChild(stick);
+            }
+
+            if (count === 0) {
+                pickBtn.innerText = "뽑기 완료!";
+                pickBtn.disabled = true;
+            } else {
+                pickBtn.innerText = "막대 뽑기";
+                pickBtn.disabled = false;
+            }
+        }
+
+        function startLottery() {
+            if (currentInCup.length === 0) return;
+
+            pickBtn.disabled = true;
+            mainContainer.classList.add('shuffling');
+
+            setTimeout(() => {
+                mainContainer.classList.remove('shuffling');
+                
+                const randomIndex = Math.floor(Math.random() * currentInCup.length);
+                const pickedTarget = currentInCup.splice(randomIndex, 1)[0];
+
+                const targetInMaster = studentMasterList.find(s => s.id === pickedTarget.id);
+                if (targetInMaster) {
+                    targetInMaster.count++;
+                    
+                    if (targetInMaster.count > currentMaxScore) {
+                        currentMaxScore = targetInMaster.count;
+                        currentTopScorerName = targetInMaster.name;
+                    }
+                }
+
+                resultName.innerText = pickedTarget.name;
+                resultOverlay.classList.add('active');
+                
+                displaySticks();
+                updateStatisticsBoard();
+            }, 1200);
+        }
+
+        function closeResult() {
+            resultOverlay.classList.remove('active');
+            if(currentInCup.length > 0) {
+                pickBtn.disabled = false;
+            } else {
+                statusText.innerText = "모든 인원이 뽑혔습니다! 다시 넣기를 눌러주세요.";
+            }
+        }
+
+        function resetLottery() {
+            currentInCup = [...studentMasterList];
+            displaySticks();
+            alert("모든 막대를 컵에 다시 넣었습니다! (기존 누적 통계는 유지됩니다)");
+        }
+
+        displaySticks();
+        updateStatisticsBoard();
+    </script>
+</body>
+</html>
