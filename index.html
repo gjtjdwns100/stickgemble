@@ -1,619 +1,1809 @@
 <!DOCTYPE html>
 <html lang="ko">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>우리반 만화풍 막대 뽑기 (모바일 최적화본)</title>
-    <link href="https://fonts.googleapis.com/css2?family=Gmarket+Sans:wght@500;700&display=swap" rel="stylesheet">
-    <style>
-        /* 기본 전체 박스 모델 설정 */
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
 
-        /* 기본 배경 (만화풍 도트) */
-        body {
-            background-color: #fffbeb; 
-            background-image: radial-gradient(#fef08a 3px, transparent 3px);
-            background-size: 28px 28px;
-            font-family: 'Gmarket Sans', sans-serif;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            padding: 30px 20px 60px 20px; /* 하단 패딩을 늘려 모바일 스크롤 여유 확보 */
-            overflow-x: hidden;
-            overflow-y: auto; /* 변경: 모바일에서 드래그/스크롤이 가능하도록 설정 */
-            user-select: none;
-        }
+<meta charset="UTF-8">
 
-        /* 우측 상단 통계 버튼 */
-        .btn-show-stats {
-            position: absolute;
-            top: 30px;
-            right: 40px;
-            padding: 12px 24px;
-            font-family: 'Gmarket Sans', sans-serif;
-            font-weight: 700;
-            font-size: 1.2rem;
-            color: #1e293b;
-            background-color: #fcd34d;
-            border: 4px solid #1e293b;
-            border-radius: 20px;
-            box-shadow: 4px 4px 0px #1e293b;
-            cursor: pointer;
-            transition: transform 0.1s, box-shadow 0.1s;
-            z-index: 50;
-        }
-        .btn-show-stats:active {
-            transform: translate(3px, 3px);
-            box-shadow: 1px 1px 0px #1e293b;
-        }
+<meta
+name="viewport"
+content="width=device-width, initial-scale=1.0"
+>
 
-        /* 메인 뽑기 구역 */
-        .picker-zone {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            width: 100%;
-        }
+<title>자리 뽑기 Ultimate Edition</title>
 
-        .status-text {
-            font-size: 1.4rem;
-            color: #1e293b;
-            font-weight: 700;
-            background: #ffffff;
-            padding: 8px 20px;
-            border: 4px solid #1e293b;
-            border-radius: 20px;
-            box-shadow: 4px 4px 0px #1e293b;
-            margin-bottom: 20px;
-            white-space: nowrap;
-        }
+<link
+href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap"
+rel="stylesheet"
+>
 
-        .container {
-            position: relative;
-            width: 100%;
-            height: 420px;
-            display: flex;
-            justify-content: center;
-            align-items: flex-end;
-            margin-bottom: 30px;
-        }
+<style>
 
-        .cup {
-            position: relative;
-            width: 260px;
-            height: 340px;
-            background: rgba(255, 255, 255, 0.7); 
-            border: 6px solid #1e293b; 
-            border-top: none;
-            border-bottom-left-radius: 40px;
-            border-bottom-right-radius: 40px;
-            box-shadow: 8px 12px 0px rgba(30, 41, 59, 0.15);
-            display: flex;
-            justify-content: center;
-            align-items: flex-end;
-            z-index: 10;
-            transform-origin: center center;
-        }
-        
-        .cup::before {
-            content: '';
-            position: absolute;
-            top: -15px;
-            left: -6px;
-            width: 260px;
-            height: 24px;
-            border: 6px solid #1e293b;
-            border-radius: 50%;
-            background: #ffffff;
-        }
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
 
-        @keyframes cupShakeEffect {
-            0% { transform: translate(0, 0) rotate(0deg); }
-            20% { transform: translate(-5px, -8px) rotate(-2deg); }
-            40% { transform: translate(6px, -3px) rotate(3deg); }
-            60% { transform: translate(-4px, -10px) rotate(-1deg); }
-            80% { transform: translate(5px, -5px) rotate(2deg); }
-            100% { transform: translate(0, 0) rotate(0deg); }
-        }
-        .shuffling .cup {
-            animation: cupShakeEffect 0.25s infinite ease-in-out;
-        }
+    font-family:
+    'Noto Sans KR',
+    'Poppins',
+    sans-serif;
+}
 
-        .sticks-container {
-            position: absolute;
-            bottom: 30px;
-            width: 200px;
-            height: 340px;
-            display: flex;
-            justify-content: center;
-            align-items: flex-end;
-        }
+body{
 
-        .stick {
-            position: absolute;
-            width: 24px;
-            height: 270px;
-            background: #fcd34d; 
-            border: 4px solid #1e293b; 
-            border-radius: 12px;
-            transform-origin: bottom center;
-            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.15);
-        }
-        .stick::after {
-            content: '';
-            position: absolute;
-            top: 8px;
-            left: 3px;
-            width: 10px;
-            height: 40px;
-            background: #f59e0b; 
-            border-radius: 6px;
-        }
+    min-height:100vh;
 
-        @keyframes stickInternalShuffle {
-            0% { transform: translate(var(--shiftX), 0) rotate(var(--rot)); }
-            25% { transform: translate(calc(var(--shiftX) - 10px), -18px) rotate(calc(var(--rot) + 8deg)); }
-            50% { transform: translate(calc(var(--shiftX) + 12px), -5px) rotate(calc(var(--rot) - 10deg)); }
-            75% { transform: translate(calc(var(--shiftX) - 8px), -22px) rotate(calc(var(--rot) + 6deg)); }
-            100% { transform: translate(var(--shiftX), 0) rotate(var(--rot)); }
-        }
-        .shuffling .stick {
-            animation: stickInternalShuffle 0.25s infinite linear;
-        }
+    background:
 
-        .btn-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 15px;
-            width: 100%;
-        }
-        .btn {
-            font-family: 'Gmarket Sans', sans-serif;
-            font-weight: 700;
-            border: 4px solid #1e293b; 
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-        .btn-pick {
-            padding: 20px 60px;
-            font-size: 1.6rem;
-            color: #fff;
-            background: #3b82f6; 
-            border-radius: 40px;
-            box-shadow: 0px 8px 0px #1d4ed8, 0px 8px 0px #1e293b; 
-        }
-        .btn-pick:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0px 10px 0px #1d4ed8, 0px 10px 0px #1e293b;
-        }
-        .btn-pick:active:not(:disabled) {
-            transform: translateY(6px);
-            box-shadow: 0px 2px 0px #1e293b;
-        }
-        .btn-pick:disabled {
-            background: #cbd5e1;
-            border-color: #64748b;
-            box-shadow: none;
-            cursor: not-allowed;
-            transform: none;
-        }
-        .btn-reset {
-            padding: 12px 28px;
-            font-size: 1rem;
-            color: #1e293b;
-            background-color: #ffffff;
-            border-radius: 30px;
-            box-shadow: 4px 4px 0px #1e293b;
-        }
-        .btn-reset:active {
-            transform: translate(3px, 3px);
-            box-shadow: 1px 1px 0px #1e293b;
-        }
+    radial-gradient(
+    circle at center,
+    #1e3a2f 0%,
+    #0f1f18 100%
+    );
 
-        /* 결과 화면 오버레이 */
-        .result-overlay {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(255, 255, 255, 0.9);
-            display: flex; flex-direction: column; justify-content: center; align-items: center;
-            z-index: 100;
-            opacity: 0; pointer-events: none; transition: opacity 0.4s ease;
-        }
-        .result-overlay.active { opacity: 1; pointer-events: auto; }
-        .result-stick-box {
-            position: relative; width: 150px; height: 680px; background: #fcd34d;
-            border: 8px solid #1e293b; border-radius: 80px; box-shadow: 16px 16px 0px #1e293b; 
-            display: flex; justify-content: center; align-items: center;
-            transform: translateY(60px) rotate(-8deg) scale(0.5);
-            transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.42, 1.2);
-        }
-        .result-overlay.active .result-stick-box { transform: translateY(0) rotate(0deg) scale(1); }
-        .result-name {
-            font-size: 4.5rem; font-weight: 700; color: #1e293b;
-            writing-mode: vertical-rl; text-orientation: upright; letter-spacing: 14px;
-        }
-        .close-hint {
-            margin-top: 50px; font-size: 1.2rem; font-weight: 700; color: #475569;
-            background: #fff; padding: 10px 24px; border: 3px solid #1e293b;
-            border-radius: 12px; cursor: pointer; box-shadow: 4px 4px 0px #1e293b;
-        }
+    color:white;
 
-        /* 통계 팝업창 (모달) 스타일 */
-        .stats-overlay {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.5); 
-            display: flex; justify-content: center; align-items: center;
-            z-index: 200;
-            opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
-        }
-        .stats-overlay.active { opacity: 1; pointer-events: auto; }
+    overflow-x:hidden;
 
-        .stats-modal {
-            width: 600px;
-            max-width: 90%; /* 변경: 모바일 기기 너비에 맞춰 자동 조절 */
-            background: #ffffff;
-            border: 6px solid #1e293b;
-            border-radius: 24px;
-            padding: 30px;
-            box-shadow: 16px 16px 0px #1e293b;
-            position: relative;
-            transform: translateY(30px);
-            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.15);
-        }
-        .stats-overlay.active .stats-modal { transform: translateY(0); }
+    padding:30px;
+}
 
-        .btn-close-stats {
-            position: absolute;
-            top: -20px; right: -20px;
-            width: 50px; height: 50px;
-            background: #ef4444; border: 4px solid #1e293b; border-radius: 50%;
-            color: white; font-size: 1.5rem; font-weight: bold;
-            display: flex; justify-content: center; align-items: center;
-            cursor: pointer; box-shadow: 4px 4px 0px #1e293b;
-        }
-        .btn-close-stats:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0px #1e293b; }
+/* =========================
+   움직이는 네온 조명
+========================= */
 
-        .stats-title {
-            font-size: 2.2rem; font-weight: 700; text-align: center;
-            margin-top: 0; margin-bottom: 20px; color: #1e293b;
-            border-bottom: 4px dashed #1e293b; padding-bottom: 10px;
-        }
+body::before{
 
-        .special-records {
-            background: #f8fafc; border: 3px solid #1e293b; border-radius: 14px;
-            padding: 15px; margin-bottom: 20px; text-align: center;
-        }
-        .record-line { 
-            font-size: 1.3rem; 
-            font-weight: 700; 
-            color: #1e293b; 
-            word-break: keep-all; 
-        }
-        .record-line span {
-            color: #e11d48; background: #ffe4e6; padding: 4px 12px;
-            border-radius: 6px; border: 2px solid #1e293b; margin-left: 5px;
-            white-space: nowrap; /* 변경: 이름이나 '아직 없음' 텍스트가 쪼개지지 않도록 설정 */
-            display: inline-block;
-        }
+    content:"";
 
-        .student-grid {
-            display: grid; 
-            grid-template-columns: 1fr 1fr; 
-            gap: 10px;
-            max-height: 400px; 
-            overflow-y: auto; 
-            padding-right: 5px;
-        }
-        .student-grid::-webkit-scrollbar { width: 10px; }
-        .student-grid::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 5px; border: 2px solid #1e293b; }
-        .student-grid::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 5px; }
+    position:fixed;
 
-        .grid-item {
-            display: flex; justify-content: space-between; align-items: center;
-            background: #f1f5f9; border: 2px solid #1e293b; padding: 10px 14px;
-            border-radius: 10px; font-weight: 700; font-size: 1.05rem; color: #1e293b;
-        }
-        .grid-item.highlight { background: #fef08a; } 
-        
-        .grid-item span:first-child {
-            white-space: nowrap; /* 변경: 명단 내의 이름 마지막 글자가 아래로 안 내려가게 방지 */
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        
-        .count-badge {
-            background: #3b82f6; color: white; border: 2px solid #1e293b;
-            padding: 2px 8px; border-radius: 6px; font-size: 0.95rem;
-            white-space: nowrap; /* 변경: '회' 글자가 분리되지 않고 가로로 고정되도록 함 */
-        }
+    width:700px;
+    height:700px;
 
-        /* ★ [추가] 모바일 기기 화면 최적화 미디어 쿼리 ★ */
-        @media (max-width: 600px) {
-            body {
-                justify-content: flex-start; /* 상단부터 채워지게 하여 자연스러운 스크롤 유도 */
-                padding-top: 15px;
-            }
+    border-radius:50%;
 
-            /* 통계 보기 버튼이 현황판과 절대 겹치지 않게 절대좌표 해제 및 상단 중앙 배치 */
-            .btn-show-stats {
-                position: relative;
-                top: 0;
-                right: 0;
-                margin-bottom: 15px;
-                width: 100%;
-                max-width: 220px;
-                text-align: center;
-                padding: 10px 20px;
-                font-size: 1.1rem;
-                box-shadow: 3px 3px 0px #1e293b;
-            }
+    background:
 
-            .status-text {
-                font-size: 1.2rem;
-                padding: 8px 16px;
-                margin-bottom: 15px;
-            }
+    radial-gradient(
+    circle,
+    rgba(16,185,129,.18),
+    transparent
+    );
 
-            /* 모바일 화면 높이에 맞게 컵 구역의 높이를 알맞게 축소 */
-            .container {
-                height: 350px;
-                margin-bottom: 20px;
-            }
-            .cup {
-                width: 210px;
-                height: 280px;
-            }
-            .cup::before {
-                width: 210px;
-                height: 20px;
-                top: -12px;
-            }
-            .sticks-container {
-                width: 160px;
-                height: 280px;
-                bottom: 25px;
-            }
-            .stick {
-                height: 220px;
-                width: 20px;
-            }
+    top:-200px;
+    left:-200px;
 
-            .btn-pick {
-                padding: 16px 45px;
-                font-size: 1.4rem;
-            }
+    animation:
+    glowMove
+    16s
+    linear
+    infinite;
 
-            /* 통계 모달 창 모바일 최적화 */
-            .stats-modal {
-                padding: 20px 15px;
-            }
-            .stats-title {
-                font-size: 1.7rem;
-                margin-bottom: 15px;
-            }
-            .record-line {
-                font-size: 1.05rem;
-                display: flex;
-                flex-direction: column; /* 좁은 폭에서 줄 바꿈 대신 세로로 정렬하여 잘림 방지 */
-                align-items: center;
-                gap: 5px;
-            }
-            .record-line span {
-                margin-left: 0;
-            }
+    pointer-events:none;
 
-            /* 모바일 폭에서는 2열 배치가 좁아 이름이 깨지므로 1열 배치로 명쾌하게 변경 */
-            .student-grid {
-                grid-template-columns: 1fr;
-                max-height: 280px;
-            }
-            .grid-item {
-                font-size: 1rem;
-                padding: 10px 12px;
-            }
-        }
-    </style>
+    z-index:-1;
+}
+
+@keyframes glowMove{
+
+    0%{
+
+        transform:
+        translate(0,0);
+
+    }
+
+    50%{
+
+        transform:
+        translate(
+        700px,
+        300px
+        );
+
+    }
+
+    100%{
+
+        transform:
+        translate(0,0);
+
+    }
+}
+
+/* =========================
+   상단
+========================= */
+
+header{
+
+    text-align:center;
+
+    margin-bottom:25px;
+}
+
+h1{
+
+    font-size:44px;
+
+    font-weight:700;
+
+    letter-spacing:-1px;
+
+    text-shadow:
+
+    0 0 15px
+    rgba(16,185,129,.5);
+}
+
+.subtitle{
+
+    color:#a7f3d0;
+
+    margin-top:8px;
+
+    font-size:14px;
+
+    letter-spacing:3px;
+
+}
+
+/* =========================
+   버튼
+========================= */
+
+.control-panel{
+
+    text-align:center;
+
+    margin-bottom:15px;
+}
+
+.btn-draw{
+
+    border:none;
+
+    cursor:pointer;
+
+    border-radius:50px;
+
+    padding:
+
+    16px
+    50px;
+
+    font-size:25px;
+
+    font-weight:700;
+
+    color:white;
+
+    background:
+
+    linear-gradient(
+    135deg,
+    #10b981,
+    #059669
+    );
+
+    box-shadow:
+
+    0 0 20px
+    rgba(16,185,129,.6),
+
+    0 10px 30px
+    rgba(16,185,129,.35);
+
+    transition:.3s;
+}
+
+.btn-draw:hover{
+
+    transform:
+    translateY(-3px)
+    scale(1.03);
+
+}
+
+/* =========================
+   교실 앞
+========================= */
+
+.classroom-front{
+
+    width:100%;
+
+    max-width:1150px;
+
+    margin:0 auto 35px;
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+    padding:
+
+    15px
+    30px;
+
+    border-radius:20px;
+
+    backdrop-filter:
+    blur(12px);
+
+    background:
+
+    rgba(255,255,255,.05);
+
+    border:
+
+    1px solid
+    rgba(255,255,255,.1);
+
+}
+
+.side-label{
+
+    color:#34d399;
+
+    font-weight:700;
+}
+
+.board-center{
+
+    font-size:24px;
+
+    font-weight:700;
+
+    letter-spacing:4px;
+
+}
+
+/* =========================
+   모둠 전체
+========================= */
+
+.grid-container{
+
+    width:100%;
+
+    max-width:1200px;
+
+    margin:auto;
+
+    display:flex;
+
+    justify-content:center;
+
+    gap:35px;
+
+    flex-wrap:wrap;
+
+}
+
+/* =========================
+   모둠 페어 기본 및 가로 점선 스타일 (3~4, 5~6)
+========================= */
+
+.group-pair{
+
+    display:flex;
+
+    gap:20px;
+
+    padding:24px;
+
+    border-radius:25px;
+
+    backdrop-filter:
+    blur(16px);
+
+    background:
+
+    rgba(255,255,255,.04);
+
+    border:
+
+    1px solid
+    rgba(255,255,255,.08);
+
+    box-shadow:
+
+    0 15px 35px
+    rgba(0,0,0,.25);
+
+    position: relative;
+
+}
+
+/* 3~4, 5~6 중앙 가로 점선 */
+.group-pair.split-horizontal::after {
+    content: "";
+    position: absolute;
+    left: 24px;
+
+    width: calc(100% - 48px);
+    top: 50%;
+    border-top: 2px dashed rgba(16, 185, 129, 0.6);
+    pointer-events: none;
+
+}
+
+/* =========================
+   1~2구역 전용: 분할선
+   위치는 JS가 실제 크기 측정 후 style로 직접 주입
+========================= */
+
+.group-pair.custom-dashed-1-2 {
+    position: relative;
+
+}
+
+.divider-v,
+.divider-h-left,
+.divider-h-right {
+    position: absolute;
+    pointer-events: none;
+    z-index: 2;
+}
+
+.divider-v {
+    width: 0;
+
+    border-left: 2px dashed rgba(16, 185, 129, 0.7);
+}
+
+.divider-h-left,
+.divider-h-right {
+    height: 0;
+
+    border-top: 2px dashed rgba(16, 185, 129, 0.7);
+}
+
+.group-column{
+
+    display:flex;
+
+    flex-direction:column;
+
+    align-items:center;
+
+    gap:12px;
+
+}
+
+/* =========================
+   좌석 기본 디자인 및 스케일 모션
+========================= */
+
+.seat{
+
+    width:110px;
+
+    height:75px;
+
+    border-radius:14px;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    text-align:center;
+
+    padding:5px;
+
+    font-size:18px;
+
+    font-weight:700;
+
+    position:relative;
+
+    cursor:pointer;
+
+    user-select:none;
+
+    color: #ffffff;
+
+    transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1), 
+                border-color 0.3s ease, 
+                box-shadow 0.3s ease, 
+                background-color 0.3s ease;
+
+    backdrop-filter:
+    blur(10px);
+
+    background:
+
+    rgba(255,255,255,.06);
+
+    border:
+
+    2px solid
+    rgba(255,255,255,.12);
+
+    z-index: 1;
+}
+
+#main-classroom .seat:not(.hidden):hover {
+    transform: scale(1.12);
+    z-index: 5;
+    background: rgba(255, 255, 255, 0.12);
+
+    border-color: rgba(52, 211, 153, 0.6);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+
+}
+
+.seat.selected {
+    transform: scale(1.2) !important; 
+    border-color: #10b981 !important;
+
+    box-shadow: 0 0 15px rgba(16, 185, 129, 0.6), 0 10px 25px rgba(0, 0, 0, 0.4);
+
+    background: rgba(16, 185, 129, 0.15) !important;
+    z-index: 10 !important;
+}
+
+/* =========================
+   가림막 모드
+========================= */
+
+.seat.hidden{
+
+    background:#111827;
+
+    color: transparent;
+
+    border:
+
+    2px solid
+    rgba(255,255,255,.15);
+
+    box-shadow:
+
+    inset 0 0 20px
+    rgba(0,0,0,.8);
+}
+
+.seat.hidden::after{
+
+    content:"?";
+
+    position:absolute;
+
+    left:50%;
+    top:50%;
+
+    transform:
+    translate(-50%,-50%);
+
+    color: #ffffff;
+
+    font-size:40px;
+
+    font-weight:900;
+
+    text-shadow:
+
+    0 0 10px white,
+    0 0 20px white;
+
+}
+
+/* 공개 */
+
+.seat.revealed{
+    color: #ffffff;
+    animation:
+    revealPop
+    .4s ease;
+
+}
+
+@keyframes revealPop{
+
+    0%{
+        transform: scale(.7);
+
+    }
+
+    70%{
+        transform: scale(1.15);
+
+    }
+
+    100%{
+        transform: scale(1);
+
+    }
+}
+
+/* 뽑는 중 */
+
+.seat.active{
+
+    background:
+
+    linear-gradient(
+    135deg,
+    #10b981,
+    #34d399
+    );
+
+    color: white;
+
+    transform:
+    scale(1.08);
+
+    box-shadow:
+
+    0 0 15px
+    #10b981,
+
+    0 0 30px
+    #10b981;
+
+}
+
+/* =========================
+   교실 뒤
+========================= */
+
+.classroom-back{
+
+    max-width:1150px;
+
+    margin:
+
+    35px auto 0;
+
+    text-align:center;
+
+    padding:20px;
+
+    border-radius:20px;
+
+    backdrop-filter:
+    blur(12px);
+
+    background:
+
+    rgba(255,255,255,.05);
+
+    border:
+
+    1px solid
+    rgba(255,255,255,.1);
+
+    font-size:30px;
+
+    font-weight:700;
+
+    color:#d1fae5;
+
+}
+
+/* =========================
+   우측 상단 설정 버튼
+========================= */
+
+.settings-fab{
+    position: fixed;
+    top: 24px;
+    right: 24px;
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    border: 1px solid rgba(255,255,255,.15);
+    background: rgba(255,255,255,.08);
+    backdrop-filter: blur(12px);
+    color: #34d399;
+    font-size: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 200;
+    transition: .25s;
+    box-shadow: 0 6px 18px rgba(0,0,0,.3);
+}
+
+.settings-fab:hover{
+    transform: rotate(35deg) scale(1.08);
+    border-color: rgba(52,211,153,.6);
+}
+
+/* =========================
+   설정 오버레이 / 패널
+========================= */
+
+.settings-overlay{
+    display:none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.55);
+    backdrop-filter: blur(3px);
+    z-index: 300;
+    justify-content: flex-end;
+}
+
+.settings-panel{
+    width: min(420px, 92vw);
+    height: 100%;
+    background: linear-gradient(160deg, #163529, #0f1f18);
+    border-left: 1px solid rgba(255,255,255,.1);
+    padding: 28px 24px;
+    overflow-y: auto;
+    box-shadow: -10px 0 40px rgba(0,0,0,.4);
+    animation: slideIn .25s ease;
+}
+
+@keyframes slideIn{
+    from{ transform: translateX(30px); opacity:0; }
+    to{ transform: translateX(0); opacity:1; }
+}
+
+.settings-panel h2{
+    font-size: 20px;
+    color: #a7f3d0;
+    margin-bottom: 6px;
+}
+
+.settings-panel .settings-desc{
+    font-size: 12.5px;
+    color: #cbd5e1;
+    margin-bottom: 20px;
+    line-height: 1.5;
+}
+
+.settings-close{
+    float: right;
+    cursor: pointer;
+    color: #cbd5e1;
+    font-size: 22px;
+    background: none;
+    border: none;
+    line-height: 1;
+}
+
+.settings-close:hover{ color: #fff; }
+
+.no-together-list{
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 14px;
+}
+
+.no-together-row{
+    background: rgba(255,255,255,.05);
+    border: 1px solid rgba(255,255,255,.1);
+    border-radius: 14px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.no-together-row .row-top{
+    display:flex;
+    align-items:center;
+    justify-content: space-between;
+}
+
+.row-title{
+    font-size: 12px;
+    color: #34d399;
+    font-weight: 700;
+    letter-spacing: .5px;
+}
+
+.row-remove{
+    background:none;
+    border:none;
+    color:#f87171;
+    cursor:pointer;
+    font-size: 13px;
+    font-weight:700;
+}
+
+.type-toggle-group{
+    display:flex;
+    gap: 6px;
+}
+
+.type-toggle-btn{
+    flex: 1;
+    background: rgba(255,255,255,.05);
+    border: 1px solid rgba(255,255,255,.15);
+    color: rgba(255,255,255,.55);
+    border-radius: 8px;
+    padding: 7px 4px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition:.2s;
+}
+
+.type-toggle-btn:hover{
+    border-color: rgba(52,211,153,.5);
+}
+
+.type-toggle-btn.active{
+    background: rgba(52,211,153,.18);
+    border-color: #34d399;
+    color: #34d399;
+}
+
+.slot-inputs{
+    display:flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.slot-inputs select{
+    flex: 1 1 auto;
+    min-width: 90px;
+    background: rgba(0,0,0,.35);
+    color: #fff;
+    border: 1px solid rgba(255,255,255,.15);
+    border-radius: 8px;
+    padding: 8px 6px;
+    font-size: 13px;
+    outline: none;
+}
+
+.slot-inputs select option{
+    background:#132720;
+    color:#fff;
+}
+
+.tab-add-btn{
+    background: rgba(52,211,153,.12);
+    border: 1px dashed rgba(52,211,153,.5);
+    color: #34d399;
+    border-radius: 8px;
+    padding: 6px 10px;
+    font-size: 12px;
+    cursor: pointer;
+    font-weight: 700;
+    align-self: flex-start;
+}
+
+.tab-add-btn:hover{ background: rgba(52,211,153,.22); }
+.tab-add-btn:disabled{
+    opacity: .35;
+    cursor: not-allowed;
+}
+
+.add-rule-btn{
+    width: 100%;
+    background: rgba(59,130,246,.15);
+    border: 1px solid rgba(59,130,246,.4);
+    color: #93c5fd;
+    border-radius: 12px;
+    padding: 12px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    margin-bottom: 18px;
+}
+.add-rule-btn:hover{ background: rgba(59,130,246,.25); }
+
+.settings-save-btn{
+    width: 100%;
+    background: linear-gradient(135deg, #10b981, #059669);
+    border: none;
+    color: #fff;
+    border-radius: 12px;
+    padding: 14px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 6px 18px rgba(16,185,129,.35);
+}
+.settings-save-btn:hover{ filter: brightness(1.08); }
+
+.settings-empty{
+    text-align:center;
+    color: rgba(255,255,255,.35);
+    font-size: 13px;
+    padding: 20px 0;
+}
+
+/* =========================
+   저장 / 기록 버튼 + 기록 모달
+========================= */
+
+.history-btn-wide{
+    width: 100%;
+    max-width: 1150px;
+    margin: 0 auto 15px;
+    display: block;
+    background: rgba(255,255,255,.05);
+    border: 1px solid rgba(255,255,255,.15);
+    color: #a7f3d0;
+    border-radius: 16px;
+    padding: 16px 20px;
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    cursor: pointer;
+    text-align:center;
+    transition:.25s;
+}
+.history-btn-wide:hover{
+    background: rgba(255,255,255,.09);
+    border-color: rgba(52,211,153,.5);
+}
+
+.history-overlay{
+    display:none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.6);
+    backdrop-filter: blur(3px);
+    z-index: 300;
+    align-items: center;
+    justify-content: center;
+}
+
+.history-modal{
+    width: min(560px, 92vw);
+    max-height: 78vh;
+    overflow-y: auto;
+    background: linear-gradient(160deg, #163529, #0f1f18);
+    border: 1px solid rgba(255,255,255,.12);
+    border-radius: 22px;
+    padding: 26px;
+    box-shadow: 0 20px 50px rgba(0,0,0,.5);
+}
+
+.history-modal h2{
+    color:#a7f3d0;
+    font-size: 20px;
+    margin-bottom: 16px;
+}
+
+.history-item{
+    background: rgba(255,255,255,.05);
+    border: 1px solid rgba(255,255,255,.1);
+    border-radius: 14px;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    display:flex;
+    justify-content: space-between;
+    align-items:center;
+    transition:.2s;
+}
+.history-item:hover{
+    background: rgba(52,211,153,.12);
+    border-color: rgba(52,211,153,.5);
+}
+
+.history-item .h-time{
+    font-size: 14px;
+    font-weight: 700;
+    color:#fff;
+}
+.history-item .h-sub{
+    font-size: 11.5px;
+    color: rgba(255,255,255,.4);
+    margin-top:2px;
+}
+
+.history-item .h-del{
+    background:none;
+    border:none;
+    color:#f87171;
+    font-size: 13px;
+    cursor:pointer;
+    padding: 6px 8px;
+}
+
+.toast-msg{
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: #fff;
+    padding: 14px 26px;
+    border-radius: 50px;
+    font-weight: 700;
+    font-size: 14.5px;
+    box-shadow: 0 10px 30px rgba(16,185,129,.5);
+    z-index: 400;
+    opacity: 0;
+    pointer-events: none;
+    transition: .3s ease;
+}
+.toast-msg.show{
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+/* =========================
+   모바일 최적화
+========================= */
+
+@media(max-width:900px){
+
+    body{
+        padding:15px;
+
+    }
+
+    h1{
+        font-size:30px;
+
+    }
+
+    .seat{
+        width:82px;
+        height:60px;
+        font-size:13px;
+
+    }
+
+    /* 모둠이 서로 겹치지 않고 세로로 정렬되도록 수정 */
+    .grid-container {
+        flex-direction: column;
+
+        align-items: center;
+    }
+
+    /* 상자 너비가 100%로 퍼져서 점선이 튀어나오는 문제 해결 */
+    .group-pair{
+        width: max-content;
+
+        justify-content:center;
+    }
+
+    .classroom-front{
+        font-size:14px;
+
+    }
+
+    .classroom-back{
+        font-size:20px;
+
+    }
+
+    .settings-fab{
+        top: 14px;
+        right: 14px;
+        width: 44px;
+        height: 44px;
+        font-size: 20px;
+    }
+
+    .settings-panel{
+        padding: 22px 16px;
+    }
+
+    .history-btn-wide{
+        font-size: 14px;
+        padding: 14px 16px;
+    }
+}
+
+</style>
+
 </head>
+
 <body>
 
-    <button class="btn-show-stats" onclick="openStatsModal()">통계 보기</button>
+<button class="settings-fab" onclick="openSettingsPanel()" title="같은 모둠 금지 설정">⚙️</button>
 
-    <div class="picker-zone">
-        <div class="status-text" id="statusText">남은 막대: 22개 / 22개</div>
+<div class="settings-overlay" id="settings-overlay">
+    <div class="settings-panel">
+        <button class="settings-close" onclick="closeSettingsPanel()">✕</button>
+        <h2>같은 모둠 금지 설정</h2>
+        <div class="settings-desc">
+            초록 점선으로 나뉜 <strong>진짜 모둠</strong> 기준으로 "모둠만" 금지하거나, <strong>바로 옆/앞뒤로 붙는 자리</strong> 기준으로 "앞뒤좌우만" 금지하거나, 둘 다 적용할 수 있어요.<br>
+            조합마다 범위를 따로 선택하세요. 한 조합에 2~4명까지 지정 가능하고, 저장 즉시 뽑기와 수동 자리 교환 모두에 적용됩니다.<br><br>
+            ※ 별도 설정 없이도, <strong>가장 최근에 저장한 기록</strong>과 같은 자리(같은 위치)에는 자동으로 다시 배정되지 않습니다.
+        </div>
+
+        <div class="no-together-list" id="no-together-list"></div>
+
+        <button class="add-rule-btn" onclick="addNoTogetherRule()">+ 금지 조합 추가</button>
+        <button class="settings-save-btn" onclick="saveNoTogetherRules()">설정 저장</button>
+    </div>
+</div>
+
+<div class="history-overlay" id="history-overlay">
+    <div class="history-modal">
+        <h2>📜 저장된 배치 기록</h2>
+        <div id="history-list"></div>
+    </div>
+</div>
+
+<div class="toast-msg" id="toast-msg"></div>
+
+<header>
+
+    <h1>
+        자리 뽑기
+    </h1>
+
+    <div class="subtitle">
+        RANDOM SEAT DRAW SYSTEM
+    </div>
+
+</header>
+
+<div class="control-panel">
+
+    <button
+        class="btn-draw"
+        onclick="drawSeats()"
+    >
+        자리 뽑기
+    </button>
+
+</div>
+
+<div class="control-panel">
+    <button class="btn-draw" style="background: linear-gradient(135deg, #f59e0b, #d97706); font-size: 16px; padding: 10px 24px; box-shadow: none; border-radius: 12px;" onclick="saveCurrentSeating()">
+        💾 저장
+    </button>
+</div>
+
+<button class="history-btn-wide" onclick="openHistoryModal()">🗂️ 기록 보기 (저장된 배치 불러오기)</button>
+
+<div class="classroom-front">
+
+    <div class="side-label">
+        창가
+    </div>
+
+    <div class="board-center">
+  
+        교실 앞
+    </div>
+
+    <div class="side-label">
+        문
+    </div>
+
+</div>
+
+<div id="main-classroom" class="grid-container">
+
+    <div class="group-pair custom-dashed-1-2">
         
-        <div class="container" id="mainContainer">
-            <div class="cup">
-                <div class="sticks-container" id="sticksContainer"></div>
-            </div>
-        </div>
+        <div class="divider-v"></div>
+        <div class="divider-h-left"></div>
+        <div class="divider-h-right"></div>
 
-        <div class="btn-container">
-            <button class="btn btn-pick" id="pickBtn" onclick="startLottery()">막대 뽑기</button>
-            <button class="btn btn-reset" onclick="resetLottery()">뽑혔던 사람 다시 넣기</button>
-        </div>
-    </div>
-
-    <div class="stats-overlay" id="statsOverlay">
-        <div class="stats-modal">
-            <div class="btn-close-stats" onclick="closeStatsModal()">X</div>
-            <h2 class="stats-title">누적 통계</h2>
-            
-            <div class="special-records">
-                <div class="record-line">제일 많이 뽑힌 사람 : <span id="mostPickedPerson">아직 없음</span></div>
-            </div>
-
-            <div class="student-grid" id="statsGrid">
-                </div>
-        </div>
-    </div>
-
-    <div class="result-overlay" id="resultOverlay" onclick="closeResult()">
-        <div class="result-stick-box">
-            <div class="result-name" id="resultName">정지아나</div>
-        </div>
-        <div class="close-hint">화면을 터치하면 창이 닫힙니다!</div>
-    </div>
-
-    <script>
-        const studentMasterList = [
-            { id: 1, name: "정지아나", count: 0 },
-            { id: 2, name: "강동은", count: 0 },
-            { id: 3, name: "권재아", count: 0 },
-            { id: 4, name: "김나현", count: 0 },
-            { id: 5, name: "김민재", count: 0 },
-            { id: 6, name: "김서온", count: 0 },
-            { id: 8, name: "마수현", count: 0 },
-            { id: 9, name: "옥나경", count: 0 },
-            { id: 10, name: "윤지민", count: 0 },
-            { id: 11, name: "이송하", count: 0 },
-            { id: 12, name: "이현진", count: 0 },
-            { id: 13, name: "임시하", count: 0 },
-            { id: 14, name: "장재윤", count: 0 },
-            { id: 15, name: "장하연", count: 0 },
-            { id: 16, name: "정루완", count: 0 },
-            { id: 17, name: "정서원", count: 0 },
-            { id: 18, name: "정연우", count: 0 },
-            { id: 19, name: "정예준", count: 0 },
-            { id: 20, name: "최다은", count: 0 },
-            { id: 21, name: "최유준", count: 0 },
-            { id: 22, name: "최윤우", count: 0 },
-            { id: 23, name: "태아연", count: 0 }
-        ];
-
-        let currentInCup = [...studentMasterList];
-        let currentMaxScore = 0;
-        let currentTopScorerName = "아직 없음";
-
-        const mainContainer = document.getElementById('mainContainer');
-        const container = document.getElementById('sticksContainer');
-        const pickBtn = document.getElementById('pickBtn');
-        const resultOverlay = document.getElementById('resultOverlay');
-        const resultName = document.getElementById('resultName');
-        const statusText = document.getElementById('statusText');
+        <div class="group-column">
+            <div class="seat"></div>
         
-        const statsOverlay = document.getElementById('statsOverlay');
-        const statsGrid = document.getElementById('statsGrid');
-        const mostPickedPerson = document.getElementById('mostPickedPerson');
+            <div class="seat"></div>
+            <div class="seat"></div>
+        </div>
 
-        function openStatsModal() {
-            statsOverlay.classList.add('active');
-        }
-        function closeStatsModal() {
-            statsOverlay.classList.remove('active');
-        }
+        <div class="group-column">
+            <div class="seat"></div>
+            <div class="seat"></div>
+            <div class="seat"></div>
+        </div>
 
-        function updateStatisticsBoard() {
-            statsGrid.innerHTML = '';
+    </div>
+
+    <div class="group-pair split-horizontal">
+
+        
+        <div class="group-column">
+            <div class="seat"></div>
+            <div class="seat"></div>
+            <div class="seat"></div>
+            <div class="seat"></div>
+        </div>
+
+        <div class="group-column">
+            <div class="seat"></div>
+            <div class="seat"></div>
+    
+            <div class="seat"></div>
+            <div class="seat"></div>
+        </div>
+
+    </div>
+
+    <div class="group-pair split-horizontal">
+
+        <div class="group-column">
+            <div class="seat"></div>
+            <div class="seat"></div>
+            <div class="seat"></div>
             
-            studentMasterList.forEach(student => {
-                const item = document.createElement('div');
-                item.classList.add('grid-item');
-                
-                if (currentMaxScore > 0 && student.count === currentMaxScore) {
-                    item.classList.add('highlight');
-                }
+            <div class="seat"></div>
+        </div>
 
-                item.innerHTML = `
-                    <span>${student.id}. ${student.name}</span>
-                    <span class="count-badge">${student.count}회</span>
-                `;
-                statsGrid.appendChild(item);
+        <div class="group-column">
+            <div class="seat"></div>
+            <div class="seat"></div>
+            <div class="seat"></div>
+            <div class="seat"></div>
+        </div>
+
+    </div>
+
+</div>
+
+<div class="classroom-back">
+    사물함
+</div>
+
+<script>
+
+const students = [
+    "정지아나", "태아연", "김서온", "임시하",
+   
+    "권재아", "정예준", "정연우", "옥나경",
+    "마수현", "정서원", "윤지민", "강동은",
+    "장재윤", "최윤우", "장하연", "김나현",
+    "김민재", "이송하", "최다은", "정루완",
+    "이현진", "최유준"
+];
+
+let firstSelectedSeat = null;
+
+function shuffle(array){
+    const arr = [...array];
+    for(let i = arr.length - 1; i > 0; i--){
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i],arr[j]] = [arr[j],arr[i]];
+    }
+    return arr;
+}
+
+/* =========================================================
+   같은 모둠 / 앞뒤좌우 금지 설정
+   - 저장 형태: [{ names:["철수","영희"], type:"group"|"adjacent"|"both" }, ...]
+   - localStorage key: seatDraw_noTogetherRules
+========================================================= */
+
+const NO_TOGETHER_KEY = "seatDraw_noTogetherRules";
+const HISTORY_KEY = "seatDraw_history";
+
+function loadNoTogetherRules(){
+    try{
+        const raw = localStorage.getItem(NO_TOGETHER_KEY);
+        if(!raw) return [];
+        const parsed = JSON.parse(raw);
+        if(!Array.isArray(parsed)) return [];
+        return parsed
+            .filter(r => r && Array.isArray(r.names) && r.names.length >= 2)
+            .map(r => ({
+                names: r.names,
+                type: (r.type === "group" || r.type === "adjacent" || r.type === "both") ? r.type : "both"
+            }));
+    }catch(e){
+        return [];
+    }
+}
+
+// 초록 점선이 실제로 나누는 "진짜 모둠"을 group-pair별로 계산해서 반환
+// - 6명(3+3) 계단식 구역(custom-dashed-1-2): 모둠A = 왼쪽[0,1] + 오른쪽[0], 모둠B = 왼쪽[2] + 오른쪽[1,2]
+// - 8명(4+4) 수평 구역(split-horizontal): 모둠A = 왼쪽[0,1] + 오른쪽[0,1], 모둠B = 왼쪽[2,3] + 오른쪽[2,3]
+function getRealGroups(){
+    const groups = [];
+
+    document.querySelectorAll("#main-classroom .group-pair").forEach(pair => {
+        const cols = Array.from(pair.querySelectorAll(".group-column"))
+            .map(col => Array.from(col.querySelectorAll(".seat")));
+        if(cols.length !== 2) return;
+
+        const [left, right] = cols;
+
+        if(pair.classList.contains("custom-dashed-1-2") && left.length === 3 && right.length === 3){
+            // 계단식 3+3 분할
+            groups.push([left[0], left[1], right[0]]);
+            groups.push([left[2], right[1], right[2]]);
+        } else if(pair.classList.contains("split-horizontal")){
+            // 수평 절반 분할 (짝수 길이 기준으로 반씩)
+            const half = Math.floor(left.length / 2);
+            groups.push([...left.slice(0, half), ...right.slice(0, half)]);
+            groups.push([...left.slice(half), ...right.slice(half)]);
+        } else {
+            // 알 수 없는 구조는 안전하게 group-pair 전체를 하나의 모둠으로 취급
+            groups.push([...left, ...right]);
+        }
+    });
+
+    return groups;
+}
+
+// 물리적으로 "앞뒤좌우"로 붙어있는 좌석 쌍(seat DOM 기준) 목록을 계산
+// - 같은 group-column 안에서 바로 위/아래 (앞뒤)
+// - 같은 group-pair 안, 서로 다른 group-column의 같은 행(=마주보는 좌우 짝)
+function getAdjacentSeatPairs(){
+    const pairs = [];
+
+    document.querySelectorAll("#main-classroom .group-pair").forEach(pair => {
+        const cols = Array.from(pair.querySelectorAll(".group-column"))
+            .map(col => Array.from(col.querySelectorAll(".seat")));
+
+        cols.forEach(colSeats => {
+            for(let i = 0; i < colSeats.length - 1; i++){
+                pairs.push([colSeats[i], colSeats[i+1]]);
+            }
+        });
+
+        if(cols.length === 2){
+            const [left, right] = cols;
+            const len = Math.min(left.length, right.length);
+            for(let i = 0; i < len; i++){
+                pairs.push([left[i], right[i]]);
+            }
+        }
+    });
+
+    return pairs;
+}
+
+// 이름 조회 함수(nameOf)를 받아 규칙 위반 여부를 판정하는 공통 로직
+function checkRulesViolation(rules, nameOf){
+    if(rules.length === 0) return false;
+
+    const needsGroupCheck = rules.some(r => r.type === "group" || r.type === "both");
+    const needsAdjCheck   = rules.some(r => r.type === "adjacent" || r.type === "both");
+
+    if(needsGroupCheck){
+        const groups = getRealGroups();
+        const groupNameSets = groups.map(seatArr => {
+            const set = new Set();
+            seatArr.forEach(seatEl => {
+                const n = nameOf(seatEl);
+                if(n) set.add(n);
             });
+            return set;
+        });
 
-            if (currentMaxScore === 0) {
-                mostPickedPerson.innerText = "아직 없음";
-            } else {
-                mostPickedPerson.innerText = `${currentTopScorerName} (${currentMaxScore}회)`;
+        for(const rule of rules){
+            if(rule.type !== "group" && rule.type !== "both") continue;
+            for(const names of groupNameSets){
+                if(rule.names.every(n => names.has(n))) return true;
+            }
+        }
+    }
+
+    if(needsAdjCheck){
+        const adjacentPairs = getAdjacentSeatPairs();
+        for(const [seatA, seatB] of adjacentPairs){
+            const nameA = nameOf(seatA);
+            const nameB = nameOf(seatB);
+            if(!nameA || !nameB) continue;
+            for(const rule of rules){
+                if(rule.type !== "adjacent" && rule.type !== "both") continue;
+                if(rule.names.includes(nameA) && rule.names.includes(nameB)) return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+// 셔플 결과(이름 배열, seats 순서와 1:1 대응)가 금지 규칙을 위반하는지 체크
+function violatesNoTogetherRules(namesInSeatOrder, seats, rules){
+    const seatToName = new Map();
+    seats.forEach((seatEl, i) => seatToName.set(seatEl, namesInSeatOrder[i]));
+    return checkRulesViolation(rules, seatEl => seatToName.get(seatEl));
+}
+
+// 현재 화면에 실제로 배정되어 있는 이름들만으로 규칙 위반 여부 체크 (수동 스왑 검증용)
+function violatesNoTogetherRulesCurrent(rules){
+    return checkRulesViolation(rules, seatEl => seatEl.dataset.name || "");
+}
+
+async function drawSeats(){
+    if(firstSelectedSeat) {
+        firstSelectedSeat.classList.remove("selected");
+        firstSelectedSeat = null;
+    }
+
+    // 메인 배치판의 좌석들만 타겟팅하도록 수정
+    const seats = document.querySelectorAll("#main-classroom .seat");
+    seats.forEach(seat=>{
+        seat.className = "seat"; 
+        seat.textContent = "";
+    });
+
+    // 가장 최근에 저장된 기록 로드 (동일 위치 중복 방지용)
+    const history = loadHistory();
+    const lastRecord = history.length > 0 ? history[0] : null;
+    const lastSeatNames = lastRecord ? lastRecord.seatNames : [];
+
+    // 최신 저장된 "같은 모둠 금지" 규칙 로드
+    const noTogetherRules = loadNoTogetherRules();
+
+    // [핵심 제한 로직] 직전 기록과 같은 위치 중복 없음 + 같은 모둠 금지 조합 없음을 만족할 때까지 무작위 재배치 시도
+    let shuffled;
+    let attempts = 0;
+    let isValid = false;
+
+    while (!isValid && attempts < 5000) {
+        shuffled = shuffle(students);
+        isValid = true;
+        
+        for (let i = 0; i < shuffled.length; i++) {
+            // 가장 최근 저장 기록에서 같은 자리(같은 위치)에 앉았던 학생과 이번에 같은 자리면 무효 처리
+            if (lastSeatNames[i] && shuffled[i] === lastSeatNames[i]) {
+                isValid = false;
+                break;
             }
         }
 
-        function displaySticks() {
-            container.innerHTML = '';
-            const count = currentInCup.length;
-            
-            statusText.innerText = `남은 막대: ${count}개 / 22개`;
-
-            for(let i = 0; i < count; i++) {
-                const stick = document.createElement('div');
-                stick.classList.add('stick');
-                
-                const maxSpread = count > 1 ? 50 : 0; 
-                const angle = count > 1 ? - (maxSpread/2) + (i * (maxSpread / (count - 1))) : 0;
-                const randomShift = (Math.random() - 0.5) * 24; 
-                
-                stick.style.setProperty('--rot', `${angle}deg`);
-                stick.style.setProperty('--shiftX', `${randomShift}px`);
-                
-                stick.style.transform = `translate(${randomShift}px, 0) rotate(${angle}deg)`;
-                stick.style.animationDelay = `${Math.random() * -0.2}s`;
-                
-                container.appendChild(stick);
-            }
-
-            if (count === 0) {
-                pickBtn.innerText = "뽑기 완료!";
-                pickBtn.disabled = true;
-            } else {
-                pickBtn.innerText = "막대 뽑기";
-                pickBtn.disabled = false;
-            }
+        if (isValid && violatesNoTogetherRules(shuffled, seats, noTogetherRules)) {
+            isValid = false;
         }
 
-        function startLottery() {
-            if (currentInCup.length === 0) return;
+        attempts++;
+    }
 
-            pickBtn.disabled = true;
-            mainContainer.classList.add('shuffling');
+    // 예외 처리: 극단적인 스왑 불가능 상황 방지
+    if (!isValid) {
+        alert("현재 조건(최근 기록과 동일 위치 방지 + 금지 조합 설정)을 모두 만족하는 배치를 찾지 못했습니다. 설정을 다시 확인해주세요.");
+        return;
+    }
+
+    for(let i=0; i<25; i++){
+        seats.forEach(seat=>{
+            seat.classList.add("active");
+            seat.textContent = students[Math.floor(Math.random() * students.length)];
+        });
+        await new Promise(resolve=>setTimeout(resolve, 70));
+    }
+
+    seats.forEach((seat,index)=>{
+        seat.classList.remove("active");
+        seat.textContent = shuffled[index];
+        seat.dataset.name = shuffled[index];
+        seat.classList.add("hidden");
+    });
+}
+
+document.addEventListener("click", function(e){
+    const targetSeat = e.target;
+
+    if (!targetSeat.classList.contains("seat")) return;
+
+    if (targetSeat.classList.contains("hidden")) {
+        targetSeat.classList.remove("hidden");
+        targetSeat.classList.add("revealed");
+        return;
+    }
+
+    if (targetSeat.classList.contains("revealed")) {
+        if (firstSelectedSeat === targetSeat) {
+            targetSeat.classList.remove("selected");
+            firstSelectedSeat = null;
+        
+            return;
+        }
+
+        if (!firstSelectedSeat) {
+            firstSelectedSeat = targetSeat;
+            targetSeat.classList.add("selected");
+        } 
+        else {
+            const seat1 = firstSelectedSeat;
+            const seat2 = targetSeat;
+
+    
+            seat2.classList.add("selected");
 
             setTimeout(() => {
-                mainContainer.classList.remove('shuffling');
-                
-                const randomIndex = Math.floor(Math.random() * currentInCup.length);
-                const pickedTarget = currentInCup.splice(randomIndex, 1)[0];
+                const tempText = seat1.textContent;
+                const tempName = seat1.dataset.name;
 
-                const targetInMaster = studentMasterList.find(s => s.id === pickedTarget.id);
-                if (targetInMaster) {
-                    targetInMaster.count++;
-                    
-                    if (targetInMaster.count > currentMaxScore) {
-                        currentMaxScore = targetInMaster.count;
-                        currentTopScorerName = targetInMaster.name;
-                    }
+                seat1.textContent = seat2.textContent;
+                seat1.dataset.name = seat2.dataset.name;
+
+                seat2.textContent = tempText;
+                seat2.dataset.name = tempName;
+
+                seat1.classList.remove("selected");
+                seat2.classList.remove("selected");
+
+                // 스왑 후 "같은 모둠 금지" 규칙(모둠 동석 + 앞뒤좌우 인접) 위반 체크
+                const rules = loadNoTogetherRules();
+                if(violatesNoTogetherRulesCurrent(rules)){
+                    // 위반이면 즉시 원상복구
+                    const revertText = seat1.textContent;
+                    const revertName = seat1.dataset.name;
+
+                    seat1.textContent = seat2.textContent;
+                    seat1.dataset.name = seat2.dataset.name;
+
+                    seat2.textContent = revertText;
+                    seat2.dataset.name = revertName;
+
+                    showToast("⚠️ 금지 조합 설정에 위반되어 되돌렸습니다");
                 }
+            }, 250);
 
-                resultName.innerText = pickedTarget.name;
-                resultOverlay.classList.add('active');
-                
-                displaySticks();
-                updateStatisticsBoard();
-            }, 1200);
+            firstSelectedSeat = null;
         }
+    }
+});
 
-        function closeResult() {
-            resultOverlay.classList.remove('active');
-            if(currentInCup.length > 0) {
-                pickBtn.disabled = false;
-            } else {
-                statusText.innerText = "모든 인원이 뽑혔습니다! 다시 넣기를 눌러주세요.";
-            }
-        }
+// 초기 로드 시 메인 배치판 좌석 텍스트만 청소
+document.querySelectorAll("#main-classroom .seat").forEach(seat=>{
+    seat.textContent = "";
+});
 
-        function resetLottery() {
-            currentInCup = [...studentMasterList];
-            displaySticks();
-            alert("모든 막대를 컵에 다시 넣었습니다! (기존 누적 통계는 유지됩니다)");
-        }
+function updateDividers() {
+    // 모든 1~2구역 전용 점선들을 찾아서(이전 판 포함) 업데이트하도록 수정
+    const pairs = document.querySelectorAll(".group-pair.custom-dashed-1-2");
+    
+    pairs.forEach(pair => {
+        const divV     = pair.querySelector(".divider-v");
+        const divHL    = pair.querySelector(".divider-h-left");
+        const divHR    = pair.querySelector(".divider-h-right");
+        if (!divV || !divHL || !divHR) return;
 
-        displaySticks();
-        updateStatisticsBoard();
-    </script>
+        const cols = pair.querySelectorAll(".group-column");
+        if (cols.length < 2) return;
+
+        const leftCol  = cols[0];
+        const rightCol = cols[1];
+
+        const leftSeats  = leftCol.querySelectorAll(".seat");
+        const rightSeats = rightCol.querySelectorAll(".seat");
+        if (leftSeats.length < 2 || rightSeats.length < 2) return;
+
+        const pairRect   = pair.getBoundingClientRect();
+        const leftSeat1  = leftSeats[0].getBoundingClientRect();
+        const leftSeat2  = leftSeats[1].getBoundingClientRect();
+
+        const rightSeat1 = rightSeats[0].getBoundingClientRect();
+        const rightSeat2 = rightSeats[1].getBoundingClientRect();
+
+        const toRelY = (absY) => absY - pairRect.top;
+        const toRelX = (absX) => absX - pairRect.left;
+
+        const midX = toRelX((leftSeat1.right + rightSeat1.left) / 2);
+
+        const leftLineY  = toRelY((leftSeat2.bottom + leftSeats[2]?.getBoundingClientRect().top ?? leftSeat2.bottom) / 2);
+        const rightLineY = toRelY((rightSeat1.bottom + rightSeat2.top) / 2);
+
+        divV.style.left   = midX + "px";
+        divV.style.top    = rightLineY + "px";
+        divV.style.height = (leftLineY - rightLineY) + "px";
+
+        divHL.style.left  = toRelX(leftSeat1.left) + "px";
+        divHL.style.width = (midX - toRelX(leftSeat1.left)) + "px";
+        divHL.style.top   = leftLineY + "px";
+
+        divHR.style.left  = midX + "px";
+        divHR.style.width = (toRelX(rightSeat1.right) - midX) + "px";
+        divHR.style.top   = rightLineY + "px";
+    });
+}
+
+window.addEventListener("load",   updateDividers);
+window.addEventListener("resize", updateDividers);
+
+/* =========================================================
+   같은 모둠 금지 설정 패널 UI
+========================================================= */
+
+let editingRules = []; // [{ id, names:[...], type:"group"|"adjacent"|"both" }, ...] 패널 열려있는 동안의 임시 편집 상태
+
+function makeRuleId(){
+    return "r" + Date.now() + Math.floor(Math.random()*1000);
+}
+
+function openSettingsPanel(){
+    // 저장된 규칙을 불러와 편집 상태로 복사
+    const saved = loadNoTogetherRules();
+    editingRules = saved.length
+        ? saved.map(r => ({ id: makeRuleId(), names: [...r.names], type: r.type }))
+        : [];
+
+    renderNoTogetherList();
+    document.getElementById("settings-overlay").style.display = "flex";
+}
+
+function closeSettingsPanel(){
+    document.getElementById("settings-overlay").style.display = "none";
+}
+
+function addNoTogetherRule(){
+    editingRules.push({ id: makeRuleId(), names: ["", ""], type: "both" });
+    renderNoTogetherList();
+}
+
+function removeNoTogetherRule(id){
+    editingRules = editingRules.filter(r => r.id !== id);
+    renderNoTogetherList();
+}
+
+function addSlotToRule(id){
+    const rule = editingRules.find(r => r.id === id);
+    if(!rule) return;
+    if(rule.names.length >= 4) return;
+    rule.names.push("");
+    renderNoTogetherList();
+}
+
+function updateRuleSlot(id, slotIndex, value){
+    const rule = editingRules.find(r => r.id === id);
+    if(!rule) return;
+    rule.names[slotIndex] = value;
+}
+
+function updateRuleType(id, type){
+    const rule = editingRules.find(r => r.id === id);
+    if(!rule) return;
+    rule.type = type;
+    renderNoTogetherList();
+}
+
+function renderNoTogetherList(){
+    const list = document.getElementById("no-together-list");
+    list.innerHTML = "";
+
+    if(editingRules.length === 0){
+        const empty = document.createElement("div");
+        empty.className = "settings-empty";
+        empty.textContent = "등록된 금지 조합이 없습니다. 아래 버튼으로 추가해보세요.";
+        list.appendChild(empty);
+        return;
+    }
+
+    const typeOptions = [
+        { value: "group",    label: "모둠만" },
+        { value: "adjacent", label: "앞뒤좌우만" },
+        { value: "both",     label: "둘 다" }
+    ];
+
+    editingRules.forEach((rule, idx) => {
+        const row = document.createElement("div");
+        row.className = "no-together-row";
+
+        const top = document.createElement("div");
+        top.className = "row-top";
+
+        const title = document.createElement("div");
+        title.className = "row-title";
+        title.textContent = `금지 조합 ${idx + 1} (${rule.names.length}명)`;
+
+        const removeBtn = document.createElement("button");
+        removeBtn.className = "row-remove";
+        removeBtn.textContent = "삭제";
+        removeBtn.onclick = () => removeNoTogetherRule(rule.id);
+
+        top.appendChild(title);
+        top.appendChild(removeBtn);
+        row.appendChild(top);
+
+        // 적용 범위 선택 (모둠만 / 앞뒤좌우만 / 둘 다)
+        const typeWrap = document.createElement("div");
+        typeWrap.className = "type-toggle-group";
+
+        typeOptions.forEach(opt => {
+            const btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "type-toggle-btn" + (rule.type === opt.value ? " active" : "");
+            btn.textContent = opt.label;
+            btn.onclick = () => updateRuleType(rule.id, opt.value);
+            typeWrap.appendChild(btn);
+        });
+        row.appendChild(typeWrap);
+
+        const slotWrap = document.createElement("div");
+        slotWrap.className = "slot-inputs";
+
+        rule.names.forEach((name, slotIdx) => {
+            const select = document.createElement("select");
+            const emptyOpt = document.createElement("option");
+            emptyOpt.value = "";
+            emptyOpt.textContent = "학생 선택";
+            select.appendChild(emptyOpt);
+
+            students.forEach(stu => {
+                const opt = document.createElement("option");
+                opt.value = stu;
+                opt.textContent = stu;
+                if(stu === name) opt.selected = true;
+                select.appendChild(opt);
+            });
+
+            select.onchange = (e) => updateRuleSlot(rule.id, slotIdx, e.target.value);
+            slotWrap.appendChild(select);
+        });
+
+        row.appendChild(slotWrap);
+
+        const addTabBtn = document.createElement("button");
+        addTabBtn.className = "tab-add-btn";
+        addTabBtn.textContent = rule.names.length >= 4
+            ? "최대 4명까지 가능"
+            : `+ ${rule.names.length + 1}명으로 늘리기`;
+        addTabBtn.disabled = rule.names.length >= 4;
+        addTabBtn.onclick = () => addSlotToRule(rule.id);
+        row.appendChild(addTabBtn);
+
+        list.appendChild(row);
+    });
+}
+
+function saveNoTogetherRules(){
+    // 유효성 검사: 각 규칙마다 빈 슬롯 없이 최소 2명, 중복 이름 없이 저장
+    const cleaned = [];
+
+    for(const rule of editingRules){
+        const names = rule.names.map(n => n.trim()).filter(n => n !== "");
+        const unique = [...new Set(names)];
+
+        if(unique.length < 2) continue; // 2명 미만이면 무시
+        cleaned.push({ names: unique, type: rule.type || "both" });
+    }
+
+    localStorage.setItem(NO_TOGETHER_KEY, JSON.stringify(cleaned));
+    closeSettingsPanel();
+    showToast("금지 조합 설정이 저장되었습니다");
+}
+
+/* =========================================================
+   현재 배치 저장 / 기록 불러오기
+========================================================= */
+
+function loadHistory(){
+    try{
+        const raw = localStorage.getItem(HISTORY_KEY);
+        const parsed = raw ? JSON.parse(raw) : [];
+        return Array.isArray(parsed) ? parsed : [];
+    }catch(e){
+        return [];
+    }
+}
+
+function saveCurrentSeating(){
+    const seats = document.querySelectorAll("#main-classroom .seat");
+    const names = Array.from(seats).map(seat => seat.dataset.name || seat.textContent.trim());
+
+    if(names.every(n => !n)){
+        alert("저장할 배치가 없습니다. 먼저 자리 뽑기를 진행해주세요.");
+        return;
+    }
+
+    const now = new Date();
+    const record = {
+        id: "h" + now.getTime(),
+        timestamp: now.getTime(),
+        label: now.toLocaleString("ko-KR", {
+            year: "numeric", month: "2-digit", day: "2-digit",
+            hour: "2-digit", minute: "2-digit", second: "2-digit",
+            hour12: false
+        }),
+        seatNames: names
+    };
+
+    const history = loadHistory();
+    history.unshift(record); // 최신 기록이 위로
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+
+    showToast("기록이 저장되었습니다");
+}
+
+function openHistoryModal(){
+    renderHistoryList();
+    document.getElementById("history-overlay").style.display = "flex";
+}
+
+function closeHistoryModal(){
+    document.getElementById("history-overlay").style.display = "none";
+}
+
+function renderHistoryList(){
+    const listEl = document.getElementById("history-list");
+    const history = loadHistory();
+    listEl.innerHTML = "";
+
+    if(history.length === 0){
+        const empty = document.createElement("div");
+        empty.className = "settings-empty";
+        empty.textContent = "저장된 기록이 없습니다. 자리 뽑기 후 '저장' 버튼을 눌러보세요.";
+        listEl.appendChild(empty);
+        return;
+    }
+
+    history.forEach(record => {
+        const item = document.createElement("div");
+        item.className = "history-item";
+
+        const left = document.createElement("div");
+        const timeEl = document.createElement("div");
+        timeEl.className = "h-time";
+        timeEl.textContent = record.label;
+        const subEl = document.createElement("div");
+        subEl.className = "h-sub";
+        subEl.textContent = `학생 ${record.seatNames.filter(n=>n).length}명 배치 · 클릭하여 불러오기`;
+        left.appendChild(timeEl);
+        left.appendChild(subEl);
+
+        const delBtn = document.createElement("button");
+        delBtn.className = "h-del";
+        delBtn.textContent = "삭제";
+        delBtn.onclick = (e) => {
+            e.stopPropagation();
+            deleteHistoryRecord(record.id);
+        };
+
+        item.appendChild(left);
+        item.appendChild(delBtn);
+        item.onclick = () => loadHistoryRecord(record);
+
+        listEl.appendChild(item);
+    });
+}
+
+function deleteHistoryRecord(id){
+    const history = loadHistory().filter(r => r.id !== id);
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+    renderHistoryList();
+}
+
+function loadHistoryRecord(record){
+    const seats = document.querySelectorAll("#main-classroom .seat");
+
+    if(firstSelectedSeat){
+        firstSelectedSeat.classList.remove("selected");
+        firstSelectedSeat = null;
+    }
+
+    seats.forEach((seat, i) => {
+        const name = record.seatNames[i] || "";
+        seat.className = "seat";
+        seat.textContent = name;
+        seat.dataset.name = name;
+        if(name) seat.classList.add("revealed");
+    });
+
+    closeHistoryModal();
+    showToast(`${record.label} 기록을 불러왔습니다`);
+}
+
+/* =========================================================
+   토스트 알림
+========================================================= */
+
+let toastTimer = null;
+function showToast(message){
+    const toast = document.getElementById("toast-msg");
+    toast.textContent = message;
+    toast.classList.add("show");
+
+    if(toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => {
+        toast.classList.remove("show");
+    }, 2200);
+}
+
+// 오버레이 바깥(배경) 클릭 시 닫기
+document.getElementById("settings-overlay").addEventListener("click", (e) => {
+    if(e.target.id === "settings-overlay") closeSettingsPanel();
+});
+document.getElementById("history-overlay").addEventListener("click", (e) => {
+    if(e.target.id === "history-overlay") closeHistoryModal();
+});
+
+</script>
+
 </body>
+
 </html>
